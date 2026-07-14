@@ -1,6 +1,7 @@
 <script setup>
 import AppHeader from './components/common/AppHeader.vue'
 import ChatWidget from './components/chatbot/ChatWidget.vue'
+import ToastHost from './components/common/ToastHost.vue'
 </script>
 
 <template>
@@ -9,4 +10,5 @@ import ChatWidget from './components/chatbot/ChatWidget.vue'
     <router-view />
   </main>
   <ChatWidget />
+  <ToastHost />
 </template>

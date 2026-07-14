@@ -1,17 +1,23 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { createPost, fetchPost, updatePost } from '../api/posts'
 import { useCategoryStore } from '../stores/categories'
+import { useLocalMetaStore } from '../stores/localMeta'
+import TagInput from '../components/common/TagInput.vue'
 
 const props = defineProps({ id: { type: [String, Number], default: null } })
 
 const router = useRouter()
+const { t } = useI18n()
 const categoryStore = useCategoryStore()
+const metaStore = useLocalMetaStore()
 
 const isEdit = computed(() => !!props.id)
-const form = reactive({ category_id: null, title: '', content: '', password: '' })
+const form = reactive({ category_id: null, title: '', content: '', password: '', tags: [] })
 const error = ref('')
+const submitting = ref(false)
 
 onMounted(async () => {
   await categoryStore.ensureLoaded()
@@ -19,6 +25,7 @@ onMounted(async () => {
     const { data } = await fetchPost(props.id)
     form.title = data.title
     form.content = data.content
+    form.tags = metaStore.tagsFor(props.id)
   } else {
     form.category_id = categoryStore.categories[0]?.id ?? null
   }
@@ -26,6 +33,7 @@ onMounted(async () => {
 
 const submit = async () => {
   error.value = ''
+  submitting.value = true
   try {
     if (isEdit.value) {
       const { data } = await updatePost(props.id, {
@@ -33,36 +41,91 @@ const submit = async () => {
         content: form.content,
         password: form.password
       })
+      metaStore.setTags(props.id, form.tags)
       router.push(`/board/${data.id}`)
     } else {
-      const { data } = await createPost(form)
+      const { data } = await createPost({
+        category_id: form.category_id,
+        title: form.title,
+        content: form.content,
+        password: form.password
+      })
+      metaStore.setTags(data.id, form.tags)
       router.push(`/board/${data.id}`)
     }
   } catch (err) {
-    error.value = err.response?.data?.detail ?? '요청 처리 중 오류가 발생했습니다.'
+    error.value = err.response?.data?.detail ?? t('common.errorGeneric')
+  } finally {
+    submitting.value = false
   }
 }
 </script>
 
 <template>
-  <section class="board-write">
-    <h2>{{ isEdit ? '게시글 수정' : '게시글 작성' }}</h2>
+  <section class="board-write panel">
+    <h1 class="page-title">{{ isEdit ? t('board.write.titleEdit') : t('board.write.titleNew') }}</h1>
     <p v-if="error" class="error">{{ error }}</p>
-    <form @submit.prevent="submit">
-      <select v-if="!isEdit" v-model="form.category_id" required>
-        <option v-for="category in categoryStore.categories" :key="category.id" :value="category.id">
-          {{ category.name }}
-        </option>
-      </select>
-      <input v-model="form.title" placeholder="제목" required />
-      <textarea v-model="form.content" placeholder="내용" required></textarea>
-      <input
-        v-model="form.password"
-        type="password"
-        :placeholder="isEdit ? '작성 시 등록한 비밀번호' : '수정용 비밀번호'"
-        required
-      />
-      <button type="submit">{{ isEdit ? '수정' : '등록' }}</button>
+
+    <form class="write-form" @submit.prevent="submit">
+      <div v-if="!isEdit" class="field">
+        <label>{{ t('board.category') }}</label>
+        <select v-model="form.category_id" required>
+          <option v-for="category in categoryStore.categories" :key="category.id" :value="category.id">
+            {{ category.name }}
+          </option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>{{ t('board.write.fieldTitle') }}</label>
+        <input v-model="form.title" required maxlength="255" />
+      </div>
+
+      <div class="field">
+        <label>{{ t('board.write.fieldContent') }}</label>
+        <textarea v-model="form.content" required></textarea>
+      </div>
+
+      <div class="field">
+        <label>{{ t('board.write.fieldTags') }}</label>
+        <TagInput v-model="form.tags" :placeholder="t('board.detail.addTagPlaceholder')" />
+        <p class="field-hint">{{ t('board.write.tagsHint') }}</p>
+      </div>
+
+      <div class="field">
+        <label>{{ isEdit ? t('board.write.fieldPasswordEdit') : t('board.write.fieldPassword') }}</label>
+        <input v-model="form.password" type="password" required />
+      </div>
+
+      <button type="submit" class="btn btn-primary" :disabled="submitting">
+        {{ isEdit ? t('board.write.submitEdit') : t('board.write.submitNew') }}
+      </button>
     </form>
   </section>
 </template>
+
+<style scoped>
+.board-write {
+  max-width: 640px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.write-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.field-hint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.write-form button {
+  align-self: flex-start;
+}
+</style>
