@@ -1,0 +1,12 @@
+# Netlify가 모노레포에서 frontend/ 만 빌드하도록 base 지정.
+# 배포 시 Netlify 사이트 설정 > Environment variables 에 VITE_API_BASE_URL(=Render 백엔드 URL)을 등록할 것.
+
+[build]
+  base = "frontend"
+  command = "npm run build"
+  publish = "dist"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

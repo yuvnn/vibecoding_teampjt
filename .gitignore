@@ -1,0 +1,19 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.idea/
+
+# Env (project-wide safety net; frontend/backend also have their own)
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+backend.log
+backend.err.log
+frontend.log
+frontend.err.log
