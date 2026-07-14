@@ -1,6 +1,6 @@
 /**
- * Loads the Kakao Maps + Kakao Share SDKs on demand via VITE_KAKAO_APP_KEY.
- * No npm package is used — Kakao ships these as plain <script> tags. If the
+ * Loads the Kakao Share SDK on demand via VITE_KAKAO_APP_KEY.
+ * No npm package is used — Kakao ships this as a plain <script> tag. If the
  * key is missing, callers should show a setup notice instead of failing.
  */
 
@@ -8,26 +8,6 @@ const KAKAO_APP_KEY = import.meta.env.VITE_KAKAO_APP_KEY
 
 export function hasKakaoKey() {
   return Boolean(KAKAO_APP_KEY)
-}
-
-let mapsPromise = null
-
-export function loadKakaoMaps() {
-  if (!KAKAO_APP_KEY) return Promise.reject(new Error('VITE_KAKAO_APP_KEY is not set'))
-  if (mapsPromise) return mapsPromise
-
-  mapsPromise = new Promise((resolve, reject) => {
-    if (window.kakao?.maps) {
-      resolve(window.kakao)
-      return
-    }
-    const script = document.createElement('script')
-    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_APP_KEY}&autoload=false&libraries=services`
-    script.onload = () => window.kakao.maps.load(() => resolve(window.kakao))
-    script.onerror = () => reject(new Error('Failed to load Kakao Maps SDK'))
-    document.head.appendChild(script)
-  })
-  return mapsPromise
 }
 
 let sharePromise = null

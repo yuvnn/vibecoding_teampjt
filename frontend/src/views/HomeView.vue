@@ -5,7 +5,7 @@ import { fetchPosts } from '../api/posts'
 import { groupPostsByRegion } from '../utils/region'
 import { useToastStore } from '../stores/toast'
 import { useTourPlaces } from '../composables/useTourPlaces'
-import KakaoMap from '../components/map/KakaoMap.vue'
+import TourMap from '../components/map/TourMap.vue'
 import LikeBookmarkBar from '../components/common/LikeBookmarkBar.vue'
 
 const MAX_ROUTE_SELECTION = 6
@@ -135,7 +135,7 @@ onBeforeUnmount(() => {
 
     <div class="map-section">
       <div class="map-area">
-        <KakaoMap
+        <TourMap
           :tour-pins="visibleTourPins"
           :region-pins="visibleRegionPins"
           :selected-ids="selectedIds"

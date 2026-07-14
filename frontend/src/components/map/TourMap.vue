@@ -1,7 +1,7 @@
 <script setup>
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { hasKakaoKey, loadKakaoMaps } from '../../utils/kakao'
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
 
 const props = defineProps({
   tourPins: { type: Array, default: () => [] },
@@ -11,34 +11,30 @@ const props = defineProps({
 })
 const emit = defineEmits(['pin-click', 'region-click'])
 
-const { t } = useI18n()
 const mapEl = ref(null)
-const ready = ref(false)
-const loadError = ref(false)
 
 let mapInstance = null
-let kakaoRef = null
 let pinOverlays = []
 let regionOverlays = []
 let polyline = null
 
 function clearPinOverlays() {
-  pinOverlays.forEach((overlay) => overlay.setMap(null))
+  pinOverlays.forEach((marker) => marker.remove())
   pinOverlays = []
 }
 
 function clearRegionOverlays() {
-  regionOverlays.forEach((overlay) => overlay.setMap(null))
+  regionOverlays.forEach((marker) => marker.remove())
   regionOverlays = []
 }
 
 function clearPolyline() {
-  polyline?.setMap(null)
+  polyline?.remove()
   polyline = null
 }
 
 function renderTourPins() {
-  if (!kakaoRef) return
+  if (!mapInstance) return
   clearPinOverlays()
   props.tourPins.forEach((pin, index) => {
     const selected = props.selectedIds.includes(pin.id)
@@ -47,76 +43,58 @@ function renderTourPins() {
     content.textContent = pin.type === 'food' ? '🍽' : '📍'
     content.title = pin.title
     content.style.animationDelay = `${(index % 6) * 0.3}s`
-    content.addEventListener('click', () => emit('pin-click', pin))
-    const overlay = new kakaoRef.maps.CustomOverlay({
-      position: new kakaoRef.maps.LatLng(pin.lat, pin.lng),
-      content,
-      yAnchor: 1
-    })
-    overlay.setMap(mapInstance)
-    pinOverlays.push(overlay)
+    const icon = L.divIcon({ html: content, className: 'map-pin-icon-wrap', iconSize: [30, 30], iconAnchor: [15, 30] })
+    const marker = L.marker([pin.lat, pin.lng], { icon })
+    marker.on('click', () => emit('pin-click', pin))
+    marker.addTo(mapInstance)
+    pinOverlays.push(marker)
   })
 }
 
 function renderRegionPins() {
-  if (!kakaoRef) return
+  if (!mapInstance) return
   clearRegionOverlays()
   props.regionPins.forEach((region, index) => {
     const content = document.createElement('div')
     content.className = 'map-region-badge'
-    content.innerHTML = `<strong>${region.label}</strong><span>${region.count}</span>`
+    const strong = document.createElement('strong')
+    strong.textContent = region.label
+    const span = document.createElement('span')
+    span.textContent = String(region.count)
+    content.append(strong, span)
     content.style.animationDelay = `${(index % 5) * 0.4}s`
-    content.addEventListener('click', () => emit('region-click', region))
-    const overlay = new kakaoRef.maps.CustomOverlay({
-      position: new kakaoRef.maps.LatLng(region.lat, region.lng),
-      content,
-      yAnchor: 1.1
-    })
-    overlay.setMap(mapInstance)
-    regionOverlays.push(overlay)
+    const icon = L.divIcon({ html: content, className: 'map-region-icon-wrap', iconAnchor: [0, 0] })
+    const marker = L.marker([region.lat, region.lng], { icon })
+    marker.on('click', () => emit('region-click', region))
+    marker.addTo(mapInstance)
+    regionOverlays.push(marker)
   })
 }
 
 function renderRoute() {
-  if (!kakaoRef) return
+  if (!mapInstance) return
   clearPolyline()
   const points = props.selectedIds
     .map((id) => props.tourPins.find((pin) => pin.id === id))
     .filter(Boolean)
   if (points.length < 2) return
 
-  polyline = new kakaoRef.maps.Polyline({
-    path: points.map((p) => new kakaoRef.maps.LatLng(p.lat, p.lng)),
-    strokeWeight: 4,
-    strokeColor: '#2563eb',
-    strokeOpacity: 0.85,
-    strokeStyle: 'solid'
-  })
-  polyline.setMap(mapInstance)
-
-  const bounds = new kakaoRef.maps.LatLngBounds()
-  points.forEach((p) => bounds.extend(new kakaoRef.maps.LatLng(p.lat, p.lng)))
-  mapInstance.setBounds(bounds)
+  polyline = L.polyline(
+    points.map((p) => [p.lat, p.lng]),
+    { weight: 4, color: '#2563eb', opacity: 0.85 }
+  ).addTo(mapInstance)
+  mapInstance.fitBounds(polyline.getBounds(), { padding: [40, 40] })
 }
 
-onMounted(async () => {
-  if (!hasKakaoKey()) {
-    loadError.value = true
-    return
-  }
-  try {
-    kakaoRef = await loadKakaoMaps()
-    mapInstance = new kakaoRef.maps.Map(mapEl.value, {
-      center: new kakaoRef.maps.LatLng(props.center.lat, props.center.lng),
-      level: 9
-    })
-    ready.value = true
-    renderTourPins()
-    renderRegionPins()
-    renderRoute()
-  } catch {
-    loadError.value = true
-  }
+onMounted(() => {
+  mapInstance = L.map(mapEl.value).setView([props.center.lat, props.center.lng], 8)
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(mapInstance)
+  renderTourPins()
+  renderRegionPins()
+  renderRoute()
 })
 
 watch(() => props.tourPins, renderTourPins)
@@ -134,67 +112,43 @@ onBeforeUnmount(() => {
   clearPinOverlays()
   clearRegionOverlays()
   clearPolyline()
+  mapInstance?.remove()
+  mapInstance = null
 })
 </script>
 
 <template>
-  <div class="kakao-map-wrap">
-    <div v-if="loadError" class="map-fallback">
-      <p class="map-fallback-title">🗺️ {{ t('home.kakaoMissingTitle') }}</p>
-      <p class="map-fallback-body">{{ t('home.kakaoMissingBody') }}</p>
-    </div>
-    <div v-else ref="mapEl" class="kakao-map"></div>
+  <div class="tour-map-wrap">
+    <div ref="mapEl" class="tour-map"></div>
   </div>
 </template>
 
 <style scoped>
-.kakao-map-wrap {
+.tour-map-wrap {
+  position: relative;
+  z-index: 0;
   width: 100%;
   height: 100%;
   border-radius: var(--radius-lg);
   overflow: hidden;
 }
 
-.kakao-map {
+.tour-map {
   width: 100%;
   height: 100%;
   min-height: 440px;
 }
-
-.map-fallback {
-  height: 100%;
-  min-height: 440px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  color: var(--color-text-muted);
-  text-align: center;
-  padding: 24px;
-  background: radial-gradient(
-    circle at center,
-    color-mix(in srgb, var(--color-primary) 8%, transparent),
-    transparent 70%
-  );
-}
-
-.map-fallback-title {
-  font-weight: 700;
-  color: var(--color-text);
-  margin: 0;
-}
-
-.map-fallback-body {
-  font-size: 0.85rem;
-  max-width: 360px;
-  margin: 0;
-}
 </style>
 
 <style>
-/* Kakao overlay content is plain DOM created outside Vue's render tree, so
+/* Leaflet overlay content is plain DOM created outside Vue's render tree, so
    these rules intentionally live in an unscoped block. */
+.map-pin-icon-wrap,
+.map-region-icon-wrap {
+  background: transparent;
+  border: none;
+}
+
 .map-pin {
   width: 30px;
   height: 30px;
