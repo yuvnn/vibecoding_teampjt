@@ -35,8 +35,12 @@ def post_message(room_id: int, payload: ChatMessageCreate, db: Session = Depends
     room = db.get(ChatRoom, room_id)
     if not room:
         raise HTTPException(status_code=404, detail="대화방을 찾을 수 없습니다.")
-    user_message, bot_message = send_message(db, room, payload.message)
-    return ChatSendResponse(user_message=user_message, bot_response=bot_message)
+    user_message, bot_message, referenced_places = send_message(
+        db, room, payload.message, payload.region
+    )
+    return ChatSendResponse(
+        user_message=user_message, bot_response=bot_message, referenced_places=referenced_places
+    )
 
 
 @router.get("/rooms/{room_id}/messages", response_model=ChatHistoryOut)

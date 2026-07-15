@@ -1,13 +1,27 @@
 <script setup>
-import { ref } from 'vue'
+import { nextTick, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter, useRoute } from 'vue-router'
 import { useChatStore } from '../../stores/chat'
+import { useMapFocusStore } from '../../stores/mapFocus'
 import PixelIcon from '../common/PixelIcon.vue'
 
 const { t } = useI18n()
+const router = useRouter()
+const route = useRoute()
 const chatStore = useChatStore()
+const mapFocusStore = useMapFocusStore()
 const isOpen = ref(false)
 const draft = ref('')
+const historyEl = ref(null)
+
+const scrollToBottom = () => {
+  nextTick(() => {
+    if (historyEl.value) historyEl.value.scrollTop = historyEl.value.scrollHeight
+  })
+}
+
+watch(() => [chatStore.messages.length, chatStore.loading], scrollToBottom)
 
 const submit = async () => {
   if (!draft.value.trim()) return
@@ -15,11 +29,27 @@ const submit = async () => {
   draft.value = ''
   await chatStore.sendMessage(text)
 }
+
+// Clicking a place chip jumps the map to it and opens its info bubble, which
+// carries its own add-route button (matching the id scheme HomeView uses for
+// its own tour pins so the two stay in sync).
+const focusPlaceOnMap = (place) => {
+  mapFocusStore.request({
+    id: `${place.place_type}-${place.content_id}`,
+    lat: place.map_y,
+    lng: place.map_x,
+    title: place.title,
+    addr: place.addr1,
+    type: place.place_type,
+    icon: place.place_type === 'food' ? 'apple' : 'pin'
+  })
+  if (route.path !== '/') router.push('/')
+}
 </script>
 
 <template>
   <div class="chat-widget">
-    <button class="chat-toggle" :title="t('chat.toggle')" @click="isOpen = !isOpen">
+    <button v-if="!isOpen" class="chat-toggle" :title="t('chat.toggle')" @click="isOpen = true">
       <PixelIcon name="chat" :size="20" color="#fff" />
     </button>
     <Teleport to="body">
@@ -31,10 +61,30 @@ const submit = async () => {
           </span>
           <button type="button" class="btn-icon" @click="isOpen = false">×</button>
         </div>
-        <div class="chat-history">
-          <p v-for="(message, index) in chatStore.messages" :key="index" :class="message.role">
-            {{ message.content }}
-          </p>
+        <div ref="historyEl" class="chat-history">
+          <div v-for="(message, index) in chatStore.messages" :key="index" class="chat-turn">
+            <p :class="message.role">{{ message.content }}</p>
+            <div v-if="message.places?.length" class="chat-places">
+              <button
+                v-for="place in message.places"
+                :key="place.content_id"
+                type="button"
+                class="chat-place-chip"
+                :title="t('chat.viewOnMap')"
+                @click="focusPlaceOnMap(place)"
+              >
+                <PixelIcon :name="place.place_type === 'food' ? 'apple' : 'pin'" :size="11" />
+                {{ place.title }}
+              </button>
+            </div>
+          </div>
+          <div v-if="chatStore.loading" class="chat-turn">
+            <p class="assistant chat-loading" aria-label="응답 기다리는 중">
+              <span class="chat-loading-dot"></span>
+              <span class="chat-loading-dot"></span>
+              <span class="chat-loading-dot"></span>
+            </p>
+          </div>
         </div>
         <form @submit.prevent="submit">
           <input v-model="draft" :placeholder="t('chat.placeholder')" />
@@ -54,14 +104,15 @@ const submit = async () => {
 
 .chat-dock {
   position: fixed;
-  left: 50%;
-  right: auto;
-  bottom: 92px;
-  transform: translateX(-50%);
+  left: auto;
+  right: 20px;
+  bottom: 20px;
   z-index: 90;
   width: 100%;
-  max-width: 500px;
-  max-height: min(60vh, 460px);
+  max-width: 380px;
+  max-height: min(65vh, 520px);
+  display: flex;
+  flex-direction: column;
   background: color-mix(in srgb, var(--color-surface) 94%, transparent);
   backdrop-filter: blur(10px);
 }
@@ -83,9 +134,85 @@ const submit = async () => {
 }
 
 .chat-history {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
+  padding: 14px;
+}
+
+.chat-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 14px;
+}
+
+.chat-loading-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-text-muted);
+  animation: chat-loading-bounce 1s ease-in-out infinite;
+}
+
+.chat-loading-dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.chat-loading-dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes chat-loading-bounce {
+  0%,
+  80%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  40% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+.chat-turn {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.chat-turn:has(.user) {
+  align-items: flex-end;
+}
+
+.chat-turn:has(.assistant) {
+  align-items: flex-start;
+}
+
+.chat-places {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-width: 78%;
+}
+
+.chat-place-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: 2px solid var(--color-shadow);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 var(--color-shadow);
 }
 
 .chat-history p {
@@ -114,10 +241,17 @@ const submit = async () => {
   border-radius: 12px 12px 12px 2px;
 }
 
+@media (max-width: 860px) {
+  .chat-dock {
+    bottom: 76px;
+  }
+}
+
 @media (max-width: 480px) {
   .chat-dock {
     width: calc(100vw - 24px);
-    bottom: 84px;
+    right: 12px;
+    bottom: 76px;
   }
 }
 </style>

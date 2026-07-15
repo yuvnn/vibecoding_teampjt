@@ -12,6 +12,7 @@ router = APIRouter(prefix="/api/tour", tags=["tour"])
 @router.get("/items", response_model=list[TourItemListItem])
 def list_tour_items(
     content_type_id: int | None = None,
+    region: str | None = None,
     keyword: str | None = None,
     sigungu_code: str | None = None,
     db: Session = Depends(get_db),
@@ -19,6 +20,8 @@ def list_tour_items(
     query = select(TourItem)
     if content_type_id is not None:
         query = query.where(TourItem.master.has(content_type_id=content_type_id))
+    if region:
+        query = query.where(TourItem.master.has(region=region))
     if sigungu_code:
         query = query.where(TourItem.sigungu_code == sigungu_code)
     if keyword:

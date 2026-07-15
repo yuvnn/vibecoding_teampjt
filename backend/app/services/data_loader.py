@@ -6,6 +6,9 @@ from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.models.category import Category
+from app.models.post import Post
+from app.models.post_category import PostCategory
+from app.models.post_place import PostPlace
 from app.models.tour_item import TourItem
 from app.models.tour_master import TourMaster
 
@@ -15,6 +18,11 @@ DEFAULT_CATEGORIES = [
     {"name": "관광지", "slug": "tour"},
     {"name": "맛집", "slug": "food"},
     {"name": "축제·행사", "slug": "festival"},
+    {"name": "문화시설", "slug": "culture"},
+    {"name": "레포츠", "slug": "leports"},
+    {"name": "숙박", "slug": "stay"},
+    {"name": "쇼핑", "slug": "shopping"},
+    {"name": "여행코스", "slug": "course"},
 ]
 
 
@@ -30,6 +38,34 @@ def seed_categories(db: Session) -> int:
             created += 1
     db.commit()
     return created
+
+
+def backfill_post_relations(db: Session) -> int:
+    """Posts created before multi-category/multi-place support only have the
+    legacy single category_id/place_name columns — copy those into the new
+    post_categories/post_places tables (idempotent: skips posts that already
+    have rows there, e.g. from a previous run or from being created fresh
+    through the new API)."""
+    posts = db.execute(
+        select(Post).where(~Post.post_categories.any())
+    ).scalars().all()
+    migrated = 0
+    for post in posts:
+        db.add(PostCategory(post_id=post.id, category_id=post.category_id))
+        if post.place_name:
+            db.add(
+                PostPlace(
+                    post_id=post.id,
+                    place_name=post.place_name,
+                    address=post.address,
+                    map_x=post.map_x,
+                    map_y=post.map_y,
+                )
+            )
+        migrated += 1
+    if migrated:
+        db.commit()
+    return migrated
 
 
 def _find_json_files() -> list[Path]:

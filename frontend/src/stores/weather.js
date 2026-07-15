@@ -16,6 +16,16 @@ export const useWeatherStore = defineStore('weather', {
     icon: 'sun',
     started: false
   }),
+  getters: {
+    // A simple travel-suitability read: rain calls for an umbrella regardless
+    // of temperature; otherwise it's the temperature that decides.
+    suitability: (state) => {
+      if (state.temperature === null) return null
+      if (state.icon === 'rain') return 'umbrella'
+      if (state.temperature < 0 || state.temperature > 33) return 'unsuitable'
+      return 'suitable'
+    }
+  },
   actions: {
     async fetchNow() {
       try {

@@ -9,7 +9,7 @@ import { useWeatherStore } from './stores/weather'
 
 onMounted(() => {
   useNotificationStore().startPolling()
-  usePresenceStore().startHeartbeat()
+  usePresenceStore().connect()
   useWeatherStore().startPolling()
 })
 </script>

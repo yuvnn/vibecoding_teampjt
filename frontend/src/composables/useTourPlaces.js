@@ -1,30 +1,48 @@
-import { ref } from 'vue'
+import { reactive, ref, watch } from 'vue'
 import { fetchTourItems } from '../api/tour'
 import { deriveRegionClusters } from '../utils/region'
+import { useRegionStore } from '../stores/region'
+import { TOUR_CONTENT_TYPES } from '../utils/tourContentTypes'
 
-const TOUR_CONTENT_TYPE_ID = 12
-const FOOD_CONTENT_TYPE_ID = 39
-
-// Module-scope singleton: Home/Board both need the same tour+food dataset
-// and derived region clusters, so fetch/derive it once per session.
-const tourItems = ref([])
-const foodItems = ref([])
+// Module-scope singleton: Home/Board both need the same tour dataset (all
+// content types) and derived region clusters, so fetch/derive it once per
+// session and refetch only when the header's region selector changes.
+const itemsByType = reactive(Object.fromEntries(TOUR_CONTENT_TYPES.map((t) => [t.key, []])))
 const clusters = ref([])
+let loadedForRegion = null
 let loadingPromise = null
 
-async function ensureTourPlacesLoaded() {
-  if (loadingPromise) return loadingPromise
-  loadingPromise = Promise.all([
-    fetchTourItems({ content_type_id: TOUR_CONTENT_TYPE_ID }),
-    fetchTourItems({ content_type_id: FOOD_CONTENT_TYPE_ID })
-  ]).then(([tourRes, foodRes]) => {
-    tourItems.value = tourRes.data
-    foodItems.value = foodRes.data
-    clusters.value = deriveRegionClusters([...tourRes.data, ...foodRes.data])
+async function loadForRegion(region) {
+  loadingPromise = Promise.all(
+    TOUR_CONTENT_TYPES.map((type) => fetchTourItems({ content_type_id: type.id, region }))
+  ).then((responses) => {
+    responses.forEach((res, index) => {
+      itemsByType[TOUR_CONTENT_TYPES[index].key] = res.data
+    })
+    clusters.value = deriveRegionClusters(responses.flatMap((res) => res.data))
+    loadedForRegion = region
   })
   return loadingPromise
 }
 
+function ensureTourPlacesLoaded() {
+  const regionStore = useRegionStore()
+  if (loadedForRegion === regionStore.selectedRegion) return loadingPromise ?? Promise.resolve()
+  return loadForRegion(regionStore.selectedRegion)
+}
+
+let watcherStarted = false
+function startRegionWatcher() {
+  if (watcherStarted) return
+  watcherStarted = true
+  const regionStore = useRegionStore()
+  watch(
+    () => regionStore.selectedRegion,
+    (region) => loadForRegion(region)
+  )
+}
+
 export function useTourPlaces() {
-  return { tourItems, foodItems, clusters, ensureTourPlacesLoaded }
+  startRegionWatcher()
+  return { itemsByType, clusters, ensureTourPlacesLoaded }
 }

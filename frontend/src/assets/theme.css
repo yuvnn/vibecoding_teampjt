@@ -58,3 +58,13 @@
     color-scheme: dark;
   }
 }
+
+/* AppHeader wraps its right-side group onto a second, centered row below
+   640px, so the fixed header height needs room for two rows there. Every
+   layout that positions itself off --header-height (Home's full-bleed map,
+   BoardWrite's centered card, etc.) picks this up automatically. */
+@media (max-width: 640px) {
+  :root {
+    --header-height: 130px;
+  }
+}

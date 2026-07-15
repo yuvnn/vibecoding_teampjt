@@ -4,8 +4,9 @@ import { useI18n } from 'vue-i18n'
 import { useBoardStore } from '../stores/board'
 import { useCategoryStore } from '../stores/categories'
 import { useLocalMetaStore } from '../stores/localMeta'
+import { useRegionStore } from '../stores/region'
 import { useTourPlaces } from '../composables/useTourPlaces'
-import { inferPostRegion } from '../utils/region'
+import { regionLabelForPost } from '../utils/region'
 import { fetchComments } from '../api/comments'
 import LikeBookmarkBar from '../components/common/LikeBookmarkBar.vue'
 import PixelIcon from '../components/common/PixelIcon.vue'
@@ -16,6 +17,7 @@ const { t } = useI18n()
 const boardStore = useBoardStore()
 const categoryStore = useCategoryStore()
 const metaStore = useLocalMetaStore()
+const regionStore = useRegionStore()
 const { clusters: regionClusters, ensureTourPlacesLoaded } = useTourPlaces()
 
 const selectedCategoryId = ref(null)
@@ -31,6 +33,7 @@ const totalPages = computed(() => Math.max(1, Math.ceil(boardStore.total / PAGE_
 const load = async () => {
   await boardStore.loadPosts({
     category_id: selectedCategoryId.value ?? undefined,
+    region: regionStore.selectedRegion,
     keyword: activeKeyword.value || undefined,
     page: page.value,
     limit: PAGE_SIZE
@@ -54,7 +57,7 @@ const loadCommentCounts = async () => {
   })
 }
 
-const regionLabel = (post) => inferPostRegion(post, regionClusters.value)?.label ?? ''
+const regionLabel = (post) => regionLabelForPost(post, regionClusters.value)
 
 const visiblePosts = computed(() => {
   let list = boardStore.posts
@@ -97,6 +100,13 @@ const goToPage = (next) => {
 }
 
 watch([selectedCategoryId, activeKeyword, page], load)
+watch(
+  () => regionStore.selectedRegion,
+  () => {
+    page.value = 1
+    load()
+  }
+)
 
 onMounted(async () => {
   ensureTourPlacesLoaded()
@@ -188,7 +198,9 @@ onMounted(async () => {
         class="post-card card"
       >
         <div class="post-card-top">
-          <span class="badge">{{ categoryStore.nameOf(post.category_id) }}</span>
+          <span v-for="categoryId in post.category_ids" :key="categoryId" class="badge">
+            {{ categoryStore.nameOf(categoryId) }}
+          </span>
           <span v-if="regionLabel(post)" class="badge badge-muted">{{ regionLabel(post) }}</span>
         </div>
         <h3 class="post-card-title">{{ post.title }}</h3>

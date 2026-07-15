@@ -37,12 +37,28 @@
   "locale": {
     "toggle": "언어 전환"
   },
+  "weather": {
+    "hint": "오늘 여행 적합 여부 보기",
+    "suitable": "오늘은 여행하기 좋은 날씨예요!",
+    "unsuitable": "오늘은 여행하기에 적합하지 않은 날씨예요.",
+    "umbrella": "비 소식이 있어요, 우산을 챙기세요 ☔"
+  },
   "home": {
     "title": "지역 정보 공유 커뮤니티 LocalHub",
-    "subtitle": "대전/충청권 관광지·맛집·게시글을 지도에서 한눈에 만나보세요",
+    "subtitle": "전국의 관광지·맛집·게시글을 지도에서 한눈에 만나보세요",
     "mapTitle": "지도로 둘러보기",
+    "selectAll": "전체 선택",
+    "collapseFilters": "필터 접기",
+    "expandFilters": "필터 펼치기",
     "layerTour": "관광지",
     "layerFood": "맛집",
+    "layerLeports": "레포츠",
+    "layerCulture": "문화시설",
+    "layerShopping": "쇼핑",
+    "layerStay": "숙박",
+    "layerCourse": "여행코스",
+    "layerFestival": "축제공연행사",
+    "layerNoData": "이 지역은 아직 수집된 데이터가 없어요",
     "layerPosts": "게시글",
     "routeTitle": "이동 경로 만들기",
     "routeHint": "지도 위 관광지·맛집 핀을 여러 개 선택하면 이동 경로가 그려져요",
@@ -52,7 +68,13 @@
     "kakaoMissingTitle": "카카오톡 공유를 사용하려면 Kakao API 키가 필요해요",
     "regionPosts": "게시글 {count}",
     "newPostToast": "새 게시글이 등록되었어요: {title}",
-    "viewOnBoard": "게시판에서 보기"
+    "viewOnBoard": "게시판에서 보기",
+    "recommendTitle": "추천 관광지·맛집",
+    "recommendEmpty": "추천할 장소가 없어요",
+    "recommendCollapse": "추천 목록 접기",
+    "recommendExpand": "추천 목록 펼치기",
+    "addToRoute": "경로에 추가",
+    "addedToRoute": "✓ 경로에 추가됨"
   },
   "board": {
     "listTitle": "게시판",
@@ -81,6 +103,8 @@
       "deletePanelDescription": "삭제하려면 비밀번호를 입력해주세요.",
       "deletePasswordRequired": "비밀번호를 입력해주세요.",
       "deleteError": "삭제에 실패했습니다.",
+      "addressTitle": "첨부된 장소",
+      "viewOnMap": "지도에서 보기",
       "shareKakao": "카카오톡 공유",
       "tagsTitle": "태그",
       "addTagPlaceholder": "태그 입력 후 Enter",
@@ -101,6 +125,11 @@
       "fieldPasswordEdit": "작성 시 등록한 비밀번호",
       "fieldTags": "태그",
       "tagsHint": "태그를 입력하고 Enter를 눌러 추가하세요 (이 브라우저에만 저장돼요)",
+      "fieldPlace": "장소 첨부 (여러 개 추가 가능)",
+      "placeSearchPlaceholder": "장소를 검색해보세요 (예: 해운대해수욕장)",
+      "categoryRequired": "카테고리를 하나 이상 선택해주세요.",
+      "moveUp": "위로 이동",
+      "moveDown": "아래로 이동",
       "submitNew": "등록",
       "submitEdit": "수정 완료"
     }
@@ -108,7 +137,8 @@
   "chat": {
     "toggle": "챗봇",
     "placeholder": "메시지를 입력하세요",
-    "send": "전송"
+    "send": "전송",
+    "viewOnMap": "지도에서 보기"
   },
   "calendar": {
     "title": "축제 캘린더",

@@ -15,6 +15,7 @@ class ChatRoomOut(BaseModel):
 
 class ChatMessageCreate(BaseModel):
     message: str = Field(min_length=1)
+    region: str | None = None
 
 
 class ChatMessageOut(BaseModel):
@@ -26,9 +27,21 @@ class ChatMessageOut(BaseModel):
     created_at: datetime
 
 
+class ChatPlaceRef(BaseModel):
+    """RAG 검색으로 답변에 실제 인용된 장소. 프론트에서 '경로에 추가' 버튼을 그리는 데 쓴다."""
+
+    content_id: str
+    title: str
+    addr1: str
+    map_x: float | None
+    map_y: float | None
+    place_type: str
+
+
 class ChatSendResponse(BaseModel):
     user_message: ChatMessageOut
     bot_response: ChatMessageOut
+    referenced_places: list[ChatPlaceRef] = []
 
 
 class ChatHistoryOut(BaseModel):

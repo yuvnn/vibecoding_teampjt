@@ -5,12 +5,14 @@ import { useRouter } from 'vue-router'
 import { deletePost } from '../api/posts'
 import { useBoardStore } from '../stores/board'
 import { useLocalMetaStore } from '../stores/localMeta'
+import { useMapFocusStore } from '../stores/mapFocus'
 import { useTourPlaces } from '../composables/useTourPlaces'
-import { inferPostRegion } from '../utils/region'
+import { regionLabelForPost } from '../utils/region'
 import { resetPageHead, setPageHead } from '../utils/head'
 import LikeBookmarkBar from '../components/common/LikeBookmarkBar.vue'
 import ShareButtons from '../components/common/ShareButtons.vue'
 import TagInput from '../components/common/TagInput.vue'
+import PixelIcon from '../components/common/PixelIcon.vue'
 import CommentSection from '../components/board/CommentSection.vue'
 
 const props = defineProps({ id: { type: [String, Number], required: true } })
@@ -18,6 +20,7 @@ const router = useRouter()
 const { t } = useI18n()
 const boardStore = useBoardStore()
 const metaStore = useLocalMetaStore()
+const mapFocusStore = useMapFocusStore()
 const { clusters: regionClusters, ensureTourPlacesLoaded } = useTourPlaces()
 
 const showDeleteConfirm = ref(false)
@@ -26,13 +29,31 @@ const deleteError = ref('')
 
 const regionLabel = computed(() => {
   if (!boardStore.currentPost) return ''
-  return inferPostRegion(boardStore.currentPost, regionClusters.value)?.label ?? ''
+  return regionLabelForPost(boardStore.currentPost, regionClusters.value)
 })
 
 const tags = computed({
   get: () => metaStore.tagsFor(props.id),
   set: (value) => metaStore.setTags(props.id, value)
 })
+
+const viewPlaceOnMap = (place) => {
+  if (!place?.map_x || !place?.map_y) return
+  mapFocusStore.request({
+    // PostPlace rows have their own real, stable id — using it here (rather
+    // than leaving id unset) is what makes the speech bubble's "add to
+    // route" button show up and work for a post's attached place too, not
+    // just chat-referenced ones.
+    id: `post-place-${place.id}`,
+    lat: place.map_y,
+    lng: place.map_x,
+    title: place.place_name || boardStore.currentPost?.title,
+    addr: place.address,
+    type: 'tour',
+    icon: 'pin'
+  })
+  router.push('/')
+}
 
 const load = async () => {
   await boardStore.loadPost(props.id)
@@ -42,6 +63,10 @@ const load = async () => {
       description: boardStore.currentPost.content?.slice(0, 100)
     })
   }
+}
+
+const goBack = () => {
+  router.back()
 }
 
 const openDeleteConfirm = () => {
@@ -85,8 +110,11 @@ onBeforeUnmount(resetPageHead)
 <template>
   <section v-if="boardStore.currentPost" class="board-detail panel">
     <header class="detail-header">
+      <button type="button" class="btn btn-ghost btn-icon detail-back-btn" :title="t('common.back')" @click="goBack">
+        <PixelIcon name="arrowLeft" :size="16" />
+      </button>
       <div class="detail-badges">
-        <span class="badge">{{ boardStore.currentPost.category_name }}</span>
+        <span v-for="name in boardStore.currentPost.category_names" :key="name" class="badge">{{ name }}</span>
         <span v-if="regionLabel" class="badge badge-muted">{{ regionLabel }}</span>
       </div>
       <div class="detail-title-row">
@@ -138,9 +166,22 @@ onBeforeUnmount(resetPageHead)
       </div>
     </header>
 
-    <div v-if="boardStore.currentPost.address" class="detail-address">
-      <strong>{{ t('board.detail.addressTitle') }}</strong>
-      <span>{{ boardStore.currentPost.address }}</span>
+    <div v-if="boardStore.currentPost.places?.length" class="detail-places">
+      <div v-for="place in boardStore.currentPost.places" :key="place.id" class="detail-address">
+        <PixelIcon name="pin" :size="14" />
+        <div class="detail-address-body">
+          <strong v-if="place.place_name">{{ place.place_name }}</strong>
+          <span v-if="place.address">{{ place.address }}</span>
+        </div>
+        <button
+          v-if="place.map_x && place.map_y"
+          type="button"
+          class="btn btn-outline btn-sm"
+          @click="viewPlaceOnMap(place)"
+        >
+          {{ t('board.detail.viewOnMap') }}
+        </button>
+      </div>
     </div>
 
     <div v-if="boardStore.currentPost.image_url" class="detail-image-wrap">
@@ -171,6 +212,10 @@ onBeforeUnmount(resetPageHead)
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.detail-back-btn {
+  align-self: flex-start;
 }
 
 .detail-badges {
@@ -228,6 +273,36 @@ onBeforeUnmount(resetPageHead)
 .delete-action-button:hover {
   background: #b93623 !important;
   color: #ffffff !important;
+}
+
+.detail-places {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detail-address {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 2px solid var(--color-shadow, #4a3728);
+  border-radius: 4px;
+  background: var(--color-primary-soft);
+}
+
+.detail-address-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.85rem;
+}
+
+.detail-address-body span {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
 }
 
 .detail-content {

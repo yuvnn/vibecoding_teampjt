@@ -495,4 +495,14 @@ onMounted(async () => {
   justify-content: flex-end;
   margin-top: 14px;
 }
+
+@media (max-width: 860px) {
+  .calendar-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .festival-panel {
+    min-height: 0;
+  }
+}
 </style>

@@ -1,17 +1,13 @@
 import { defineStore } from 'pinia'
-import apiClient from '../api/client'
 
-const SESSION_KEY = 'localhub-session-id'
-const HEARTBEAT_INTERVAL_MS = 20000
+const RECONNECT_DELAY_MS = 3000
 
-function getSessionId() {
-  let id = sessionStorage.getItem(SESSION_KEY)
-  if (!id) {
-    id = crypto.randomUUID()
-    sessionStorage.setItem(SESSION_KEY, id)
-  }
-  return id
+function wsUrl() {
+  const base = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
+  return `${base.replace(/^http/, 'ws')}/api/presence/ws`
 }
+
+let socket = null
 
 export const usePresenceStore = defineStore('presence', {
   state: () => ({
@@ -19,21 +15,27 @@ export const usePresenceStore = defineStore('presence', {
     started: false
   }),
   actions: {
-    async beat() {
-      try {
-        const { data } = await apiClient.post('/api/presence/heartbeat', {
-          session_id: getSessionId()
-        })
-        this.count = data.count
-      } catch {
-        // silent: presence is a nicety, not critical path
-      }
-    },
-    startHeartbeat() {
+    connect() {
       if (this.started) return
       this.started = true
-      this.beat()
-      setInterval(() => this.beat(), HEARTBEAT_INTERVAL_MS)
+      this._open()
+    },
+    _open() {
+      socket = new WebSocket(wsUrl())
+
+      socket.onmessage = (event) => {
+        try {
+          this.count = JSON.parse(event.data).count
+        } catch {
+          // ignore malformed frame
+        }
+      }
+
+      socket.onclose = () => {
+        setTimeout(() => this._open(), RECONNECT_DELAY_MS)
+      }
+
+      socket.onerror = () => socket.close()
     }
   }
 })

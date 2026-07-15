@@ -297,6 +297,15 @@ textarea {
   z-index: 60;
 }
 
+/* Home's mobile bottom-sheet footer sits at the bottom of the screen — lift
+   the chat button clear of it everywhere, since the widget is global and
+   can't otherwise tell whether that footer is present on the current page. */
+@media (max-width: 860px) {
+  .chat-widget {
+    bottom: 76px;
+  }
+}
+
 .chat-toggle {
   width: 56px;
   height: 56px;

@@ -37,12 +37,28 @@
   "locale": {
     "toggle": "Switch language"
   },
+  "weather": {
+    "hint": "See if today's good for a trip",
+    "suitable": "Great weather for a trip today!",
+    "unsuitable": "Not great weather for a trip today.",
+    "umbrella": "Rain's in the forecast — bring an umbrella ☔"
+  },
   "home": {
     "title": "LocalHub — Local Community",
     "subtitle": "Explore Daejeon/Chungcheong attractions, restaurants, and posts on the map",
     "mapTitle": "Explore the map",
+    "selectAll": "Select all",
+    "collapseFilters": "Collapse filters",
+    "expandFilters": "Expand filters",
     "layerTour": "Attractions",
     "layerFood": "Restaurants",
+    "layerLeports": "Leisure sports",
+    "layerCulture": "Culture spots",
+    "layerShopping": "Shopping",
+    "layerStay": "Stays",
+    "layerCourse": "Travel courses",
+    "layerFestival": "Festivals",
+    "layerNoData": "No data collected for this region yet",
     "layerPosts": "Posts",
     "routeTitle": "Build a route",
     "routeHint": "Select multiple pins on the map to draw a route between them",
@@ -52,7 +68,13 @@
     "kakaoMissingTitle": "A Kakao API key is required to share to KakaoTalk",
     "regionPosts": "{count} posts",
     "newPostToast": "New post published: {title}",
-    "viewOnBoard": "View on board"
+    "viewOnBoard": "View on board",
+    "recommendTitle": "Recommended spots",
+    "recommendEmpty": "Nothing to recommend yet",
+    "recommendCollapse": "Collapse recommendations",
+    "recommendExpand": "Expand recommendations",
+    "addToRoute": "Add to route",
+    "addedToRoute": "✓ Added to route"
   },
   "board": {
     "listTitle": "Board",
@@ -81,6 +103,8 @@
       "deletePanelDescription": "Enter your password to delete this post.",
       "deletePasswordRequired": "Please enter your password.",
       "deleteError": "Failed to delete the post.",
+      "addressTitle": "Attached place",
+      "viewOnMap": "View on map",
       "shareKakao": "Share on KakaoTalk",
       "tagsTitle": "Tags",
       "addTagPlaceholder": "Type a tag and press Enter",
@@ -101,6 +125,11 @@
       "fieldPasswordEdit": "Password used when posting",
       "fieldTags": "Tags",
       "tagsHint": "Type a tag and press Enter to add it (saved only in this browser)",
+      "fieldPlace": "Attach places (you can add more than one)",
+      "placeSearchPlaceholder": "Search for a place (e.g. Haeundae Beach)",
+      "categoryRequired": "Please select at least one category.",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
       "submitNew": "Publish",
       "submitEdit": "Save changes"
     }
@@ -108,7 +137,8 @@
   "chat": {
     "toggle": "Chat",
     "placeholder": "Type a message",
-    "send": "Send"
+    "send": "Send",
+    "viewOnMap": "View on map"
   },
   "calendar": {
     "title": "Festival Calendar",
