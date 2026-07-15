@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import api_router
 from app.core.config import get_settings
 from app.core.database import Base, SessionLocal, engine
-from app.services.data_loader import seed_categories
+from app.services.data_loader import load_tour_data, seed_categories
 
 settings = get_settings()
 
@@ -27,6 +27,9 @@ def on_startup() -> None:
     db = SessionLocal()
     try:
         seed_categories(db)
+        loaded = load_tour_data(db)
+        if loaded:
+            print(f"[startup] tour data {loaded}건 적재 완료")
     finally:
         db.close()
 

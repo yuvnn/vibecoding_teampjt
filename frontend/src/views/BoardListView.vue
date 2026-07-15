@@ -8,6 +8,7 @@ import { useTourPlaces } from '../composables/useTourPlaces'
 import { inferPostRegion } from '../utils/region'
 import { fetchComments } from '../api/comments'
 import LikeBookmarkBar from '../components/common/LikeBookmarkBar.vue'
+import PixelIcon from '../components/common/PixelIcon.vue'
 
 const PAGE_SIZE = 10
 
@@ -196,8 +197,8 @@ onMounted(async () => {
         </div>
         <div class="post-card-footer">
           <span class="post-card-meta">{{ post.created_at?.slice(0, 10) }}</span>
-          <span class="post-card-meta">👁 {{ post.view_count }}</span>
-          <span class="post-card-meta">💬 {{ commentCounts[post.id] ?? 0 }}</span>
+          <span class="post-card-meta"><PixelIcon name="eye" :size="12" /> {{ post.view_count }}</span>
+          <span class="post-card-meta"><PixelIcon name="chat" :size="12" /> {{ commentCounts[post.id] ?? 0 }}</span>
           <LikeBookmarkBar :post-id="post.id" compact />
         </div>
       </router-link>

@@ -48,7 +48,7 @@ const handleClick = (toast) => {
   padding: 12px 14px;
   border-radius: var(--radius-sm);
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: 2px solid var(--color-border);
   box-shadow: var(--shadow-md);
   font-size: 0.88rem;
   color: var(--color-text);

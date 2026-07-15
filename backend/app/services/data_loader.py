@@ -33,17 +33,16 @@ def seed_categories(db: Session) -> int:
 
 
 def _find_json_files() -> list[Path]:
-    """data/raw/<선정권역>/*.json 을 우선 사용하고, 없으면 data/raw/*.json(구 평면 구조)도 허용한다.
+    """data/raw/ 아래 모든 권역 폴더의 *.json 파일을 수집한다.
 
     제공 데이터는 5개 권역(서울/대전_충청권/구미_경북권/광주_전라권/부산)별 하위 폴더로
-    내려오지만, 의뢰서상 서비스는 REGION 설정값(.env, 기본 '대전/충청권') 1개 권역만
-    선정해 구축하므로 그 폴더만 적재 대상으로 삼는다.
+    내려오며, 서버 시작 시 전 권역 데이터를 tour_masters/tour_items에 적재한다.
     """
-    settings = get_settings()
-    region_dir = DATA_DIR / settings.region.replace("/", "_")
-    if region_dir.is_dir():
-        return sorted(region_dir.glob("*.json"))
-    return sorted(DATA_DIR.glob("*.json"))
+    json_files = []
+    for folder in sorted(DATA_DIR.iterdir()):
+        if folder.is_dir():
+            json_files.extend(sorted(folder.glob("*.json")))
+    return json_files
 
 
 def load_tour_data(db: Session) -> int:

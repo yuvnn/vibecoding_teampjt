@@ -1,6 +1,11 @@
 {
   "common": {
     "appName": "LocalHub",
+    "regionLabel": "Daejeon·Chungcheong",
+    "presenceTitle": "Current concurrent visitors",
+    "presenceCount": "{count} online",
+    "notifications": "Notifications",
+    "notificationsEmpty": "No new notifications",
     "loading": "Loading...",
     "save": "Save",
     "cancel": "Cancel",
@@ -44,12 +49,10 @@
     "routeEmpty": "No places selected yet",
     "routeSelected": "{count} selected",
     "routeClear": "Clear selection",
-    "kakaoMissingTitle": "A Kakao API key is required to show the map",
-    "kakaoMissingBody": "Fill in VITE_KAKAO_APP_KEY in frontend/.env and restart the app.",
+    "kakaoMissingTitle": "A Kakao API key is required to share to KakaoTalk",
     "regionPosts": "{count} posts",
     "newPostToast": "New post published: {title}",
-    "viewOnBoard": "View on board",
-    "recentPosts": "Recent posts"
+    "viewOnBoard": "View on board"
   },
   "board": {
     "listTitle": "Board",

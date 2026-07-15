@@ -1,31 +1,26 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { fetchPosts } from '../api/posts'
 import { groupPostsByRegion } from '../utils/region'
-import { useToastStore } from '../stores/toast'
+import { useNotificationStore } from '../stores/notifications'
 import { useTourPlaces } from '../composables/useTourPlaces'
-import KakaoMap from '../components/map/KakaoMap.vue'
-import LikeBookmarkBar from '../components/common/LikeBookmarkBar.vue'
+import TourMap from '../components/map/TourMap.vue'
+import PixelIcon from '../components/common/PixelIcon.vue'
 
 const MAX_ROUTE_SELECTION = 6
-const POLL_INTERVAL_MS = 20000
 
 const { t } = useI18n()
-const toastStore = useToastStore()
+const notificationStore = useNotificationStore()
 const { tourItems, foodItems, clusters: regionClusters, ensureTourPlacesLoaded } = useTourPlaces()
 
 const posts = ref([])
-const loading = ref(true)
 
 const showTour = ref(true)
 const showFood = ref(true)
 const showPosts = ref(true)
 const selectedIds = ref([])
 const activeRegionId = ref(null)
-
-let pollTimer = null
-let lastSeenPostId = null
 
 const toPins = (items, type) =>
   items
@@ -70,8 +65,6 @@ const activeRegion = computed(() =>
   regionGroups.value.find((group) => group.cluster.id === activeRegionId.value) ?? null
 )
 
-const recentPosts = computed(() => posts.value.slice(0, 5))
-
 const onPinClick = (pin) => {
   const index = selectedIds.value.indexOf(pin.id)
   if (index !== -1) {
@@ -93,37 +86,20 @@ const clearRoute = () => {
 const loadPosts = async () => {
   const { data } = await fetchPosts({ limit: 100 })
   posts.value = data.posts
-  if (data.posts.length) {
-    lastSeenPostId = Math.max(lastSeenPostId ?? 0, ...data.posts.map((post) => post.id))
-  }
-}
-
-const pollForNewPosts = async () => {
-  try {
-    const { data } = await fetchPosts({ limit: 1 })
-    const latest = data.posts[0]
-    if (latest && lastSeenPostId !== null && latest.id > lastSeenPostId) {
-      lastSeenPostId = latest.id
-      toastStore.push(t('home.newPostToast', { title: latest.title }), { type: 'success' })
-      loadPosts()
-    }
-  } catch {
-    // silent: polling is a soft real-time nicety, not critical path
-  }
 }
 
 onMounted(async () => {
-  try {
-    await Promise.all([ensureTourPlacesLoaded(), loadPosts()])
-  } finally {
-    loading.value = false
-  }
-  pollTimer = setInterval(pollForNewPosts, POLL_INTERVAL_MS)
+  await Promise.all([ensureTourPlacesLoaded(), loadPosts()])
 })
 
-onBeforeUnmount(() => {
-  if (pollTimer) clearInterval(pollTimer)
-})
+// The notification store polls for new posts globally (see App.vue); when it
+// notices one, refresh this view's full post list so the map regions update too.
+watch(
+  () => notificationStore.lastSeenPostId,
+  (_current, previous) => {
+    if (previous !== null) loadPosts()
+  }
+)
 </script>
 
 <template>
@@ -135,7 +111,7 @@ onBeforeUnmount(() => {
 
     <div class="map-section">
       <div class="map-area">
-        <KakaoMap
+        <TourMap
           :tour-pins="visibleTourPins"
           :region-pins="visibleRegionPins"
           :selected-ids="selectedIds"
@@ -147,15 +123,15 @@ onBeforeUnmount(() => {
           <span class="map-toolbar-title">{{ t('home.mapTitle') }}</span>
           <label class="layer-toggle">
             <input v-model="showTour" type="checkbox" />
-            📍 {{ t('home.layerTour') }}
+            <PixelIcon name="pin" :size="14" /> {{ t('home.layerTour') }}
           </label>
           <label class="layer-toggle">
             <input v-model="showFood" type="checkbox" />
-            🍽 {{ t('home.layerFood') }}
+            <PixelIcon name="apple" :size="14" /> {{ t('home.layerFood') }}
           </label>
           <label class="layer-toggle">
             <input v-model="showPosts" type="checkbox" />
-            💬 {{ t('home.layerPosts') }}
+            <PixelIcon name="chat" :size="14" /> {{ t('home.layerPosts') }}
           </label>
         </div>
 
@@ -200,34 +176,26 @@ onBeforeUnmount(() => {
         </div>
       </div>
     </div>
-
-    <div v-if="!loading" class="recent-section">
-      <h2 class="panel-title">{{ t('home.recentPosts') }}</h2>
-      <div class="recent-float-list">
-        <div
-          v-for="(post, index) in recentPosts"
-          :key="post.id"
-          class="recent-float-card"
-          :style="{ animationDelay: `${index * 0.35}s` }"
-        >
-          <router-link :to="`/board/${post.id}`" class="recent-title">{{ post.title }}</router-link>
-          <LikeBookmarkBar :post-id="post.id" compact />
-        </div>
-        <p v-if="!recentPosts.length" class="empty-state">{{ t('board.empty') }}</p>
-      </div>
-    </div>
   </section>
 </template>
 
 <style scoped>
 .home {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  position: fixed;
+  top: var(--header-height);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
 }
 
 .home-banner {
-  padding: 36px 32px;
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 8;
+  max-width: 300px;
+  padding: 16px 20px;
   border-radius: var(--radius-lg);
   background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
   color: #fff;
@@ -235,41 +203,37 @@ onBeforeUnmount(() => {
 }
 
 .home-banner h1 {
-  margin: 0 0 8px;
-  font-size: 1.6rem;
+  margin: 0 0 6px;
+  font-size: 1.15rem;
 }
 
 .home-banner p {
   margin: 0;
+  font-size: 0.8rem;
   opacity: 0.9;
 }
 
-.panel-title {
-  margin: 0;
-  font-size: 1.1rem;
-}
-
 .map-section {
-  width: 100%;
+  position: absolute;
+  inset: 0;
 }
 
 .map-area {
   position: relative;
-  min-height: 520px;
-  height: 60vh;
-  max-height: 640px;
+  width: 100%;
+  height: 100%;
 }
 
 .map-toolbar {
   position: absolute;
-  top: 16px;
+  top: 154px;
   left: 16px;
-  right: 16px;
   z-index: 6;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 14px;
+  max-width: calc(100% - 32px);
   padding: 10px 16px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--color-surface) 78%, transparent);
@@ -411,68 +375,30 @@ onBeforeUnmount(() => {
   margin-top: auto;
 }
 
-.recent-section {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.recent-float-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 18px;
-  padding: 8px 4px 24px;
-}
-
-.recent-float-card {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 18px;
-  border-radius: 999px;
-  background: var(--color-surface);
-  box-shadow: var(--shadow-md);
-  animation: floaty 4s ease-in-out infinite;
-}
-
-.recent-title {
-  font-size: 0.92rem;
-  font-weight: 500;
-  max-width: 220px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.recent-title:hover {
-  color: var(--color-primary-dark);
-}
-
 @media (max-width: 860px) {
-  .map-area {
-    height: auto;
-    min-height: 0;
+  .home-banner {
+    max-width: calc(100% - 32px);
+    padding: 12px 16px;
+  }
+
+  .home-banner p {
+    display: none;
   }
 
   .map-toolbar {
-    position: static;
-    margin-bottom: 12px;
-    border-radius: var(--radius-lg);
-    backdrop-filter: none;
+    top: 74px;
+    gap: 8px;
+    padding: 8px 12px;
+    font-size: 0.8rem;
   }
 
   .route-panel {
-    position: static;
-    width: auto;
-    margin-top: 12px;
-    backdrop-filter: none;
-  }
-
-  .region-popover {
-    position: static;
-    width: auto;
-    margin-top: 12px;
-    backdrop-filter: none;
+    top: auto;
+    bottom: 112px;
+    right: 16px;
+    width: 150px;
+    max-height: 150px;
+    overflow-y: auto;
   }
 }
 </style>

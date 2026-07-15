@@ -1,3 +1,4 @@
+@import url('https://cdn.jsdelivr.net/npm/galmuri/dist/galmuri.css');
 @import './theme.css';
 
 * {
@@ -11,7 +12,7 @@ body {
 }
 
 body {
-  font-family: 'Pretendard', 'Apple SD Gothic Neo', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Galmuri11', 'Apple SD Gothic Neo', -apple-system, BlinkMacSystemFont, monospace;
   color: var(--color-text);
   background: var(--color-bg);
   transition: background-color 0.2s ease, color 0.2s ease;
@@ -59,6 +60,29 @@ button {
   font-size: 0.95rem;
 }
 
+/* Pixel-cut corners: shared clip-path notch for chunky surfaces */
+.btn:not(.btn-icon),
+.card,
+.panel,
+.chat-panel,
+.toast {
+  --pixel-notch: 6px;
+  clip-path: polygon(
+    0 var(--pixel-notch),
+    var(--pixel-notch) var(--pixel-notch),
+    var(--pixel-notch) 0,
+    calc(100% - var(--pixel-notch)) 0,
+    calc(100% - var(--pixel-notch)) var(--pixel-notch),
+    100% var(--pixel-notch),
+    100% calc(100% - var(--pixel-notch)),
+    calc(100% - var(--pixel-notch)) calc(100% - var(--pixel-notch)),
+    calc(100% - var(--pixel-notch)) 100%,
+    var(--pixel-notch) 100%,
+    var(--pixel-notch) calc(100% - var(--pixel-notch)),
+    0 calc(100% - var(--pixel-notch))
+  );
+}
+
 /* Buttons */
 .btn {
   display: inline-flex;
@@ -67,23 +91,32 @@ button {
   gap: 6px;
   padding: 10px 18px;
   border-radius: var(--radius-sm);
-  border: 1px solid transparent;
+  border: 2px solid var(--color-shadow);
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease,
+  transition: transform 0.08s ease, box-shadow 0.08s ease, background-color 0.12s ease,
     border-color 0.12s ease;
   white-space: nowrap;
+  --pixel-notch: 4px;
 }
 
-.btn:active {
-  transform: translateY(1px);
+.btn:not(.btn-icon) {
+  box-shadow: var(--shadow-sm);
+}
+
+.btn:not(.btn-icon):active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+.btn-icon:active {
+  transform: scale(0.92);
 }
 
 .btn-primary {
   background: var(--color-primary);
   color: #fff;
-  box-shadow: var(--shadow-sm);
 }
 
 .btn-primary:hover {
@@ -91,19 +124,20 @@ button {
 }
 
 .btn-outline {
-  background: transparent;
+  background: var(--color-surface);
   border-color: var(--color-border);
   color: var(--color-text);
 }
 
 .btn-outline:hover {
   border-color: var(--color-primary);
-  color: var(--color-primary);
+  color: var(--color-primary-dark);
 }
 
 .btn-ghost {
   background: var(--color-surface-alt);
   color: var(--color-text);
+  border-color: var(--color-border);
 }
 
 .btn-ghost:hover {
@@ -111,24 +145,25 @@ button {
 }
 
 .btn-danger {
-  background: transparent;
+  background: var(--color-surface);
   color: var(--color-danger);
-  border-color: color-mix(in srgb, var(--color-danger) 40%, transparent);
+  border-color: var(--color-danger);
 }
 
 .btn-danger:hover {
-  background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+  background: color-mix(in srgb, var(--color-danger) 12%, var(--color-surface));
 }
 
 .btn-icon {
   padding: 8px;
-  border-radius: 999px;
+  border-radius: 50%;
   line-height: 1;
 }
 
 .btn-sm {
   padding: 6px 12px;
   font-size: 0.8rem;
+  --pixel-notch: 3px;
 }
 
 .btn:disabled {
@@ -139,17 +174,17 @@ button {
 /* Surfaces */
 .card {
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: 2px solid var(--color-border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
 }
 
 .panel {
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: 2px solid var(--color-border);
   border-radius: var(--radius-lg);
   padding: 20px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
 }
 
 /* Badges & tags */
@@ -159,14 +194,16 @@ button {
   padding: 3px 10px;
   border-radius: 999px;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   background: var(--color-primary-soft);
   color: var(--color-primary-dark);
+  border: 1px solid var(--color-primary-light);
 }
 
 .badge-muted {
   background: var(--color-surface-alt);
   color: var(--color-text-muted);
+  border-color: var(--color-border);
 }
 
 .tag-chip {
@@ -206,7 +243,7 @@ textarea {
   font-size: 0.95rem;
   color: var(--color-text);
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: 2px solid var(--color-border);
   border-radius: var(--radius-sm);
   padding: 10px 12px;
   transition: border-color 0.12s ease, box-shadow 0.12s ease;
@@ -217,7 +254,7 @@ select:focus,
 textarea:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 18%, transparent);
+  box-shadow: 2px 2px 0 var(--color-primary-light);
 }
 
 textarea {
@@ -264,12 +301,18 @@ textarea {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  border: none;
+  border: 2px solid var(--color-shadow);
   background: var(--color-primary);
   color: #fff;
   font-size: 0.75rem;
   cursor: pointer;
   box-shadow: var(--shadow-md);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+
+.chat-toggle:active {
+  transform: translate(3px, 3px);
+  box-shadow: none;
 }
 
 .chat-panel {
@@ -281,7 +324,7 @@ textarea {
   display: flex;
   flex-direction: column;
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: 2px solid var(--color-border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-lg);
   overflow: hidden;

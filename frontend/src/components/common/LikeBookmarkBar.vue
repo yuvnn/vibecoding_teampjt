@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useLocalMetaStore } from '../../stores/localMeta'
+import PixelIcon from './PixelIcon.vue'
 
 const props = defineProps({
   postId: { type: [String, Number], required: true },
@@ -38,7 +39,7 @@ const toggleBookmark = (event) => {
       :title="t('board.likes')"
       @click="toggleLike"
     >
-      <span>{{ liked ? '❤️' : '🤍' }}</span>
+      <PixelIcon name="heart" :size="14" :color="liked ? 'var(--color-danger)' : 'var(--color-text-muted)'" />
       <span>{{ likeCount }}</span>
     </button>
     <button
@@ -49,7 +50,7 @@ const toggleBookmark = (event) => {
       :title="bookmarked ? t('board.bookmarkRemove') : t('board.bookmarkAdd')"
       @click="toggleBookmark"
     >
-      <span>{{ bookmarked ? '🔖' : '📑' }}</span>
+      <PixelIcon name="bookmark" :size="14" :color="bookmarked ? 'var(--color-primary-dark)' : 'var(--color-text-muted)'" />
     </button>
   </div>
 </template>
