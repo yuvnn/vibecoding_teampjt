@@ -25,7 +25,7 @@ def list_tour_items(
         like = f"%{keyword}%"
         query = query.where(or_(TourItem.title.ilike(like), TourItem.addr1.ilike(like)))
 
-    return db.execute(query.limit(200)).scalars().all()
+    return db.execute(query.limit(1000)).scalars().all()
 
 
 @router.get("/items/{content_id}", response_model=TourItemDetail)
