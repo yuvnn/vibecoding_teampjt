@@ -2,6 +2,7 @@
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { renderPixelIconSVG } from '../../utils/pixelIcons'
 
 const props = defineProps({
   tourPins: { type: Array, default: () => [] },
@@ -40,7 +41,7 @@ function renderTourPins() {
     const selected = props.selectedIds.includes(pin.id)
     const content = document.createElement('div')
     content.className = `map-pin map-pin--${pin.type}${selected ? ' map-pin--selected' : ''}`
-    content.textContent = pin.type === 'food' ? '🍽' : '📍'
+    content.innerHTML = renderPixelIconSVG(pin.type === 'food' ? 'apple' : 'pin', { size: 16, color: '#fff' })
     content.title = pin.title
     content.style.animationDelay = `${(index % 6) * 0.3}s`
     const icon = L.divIcon({ html: content, className: 'map-pin-icon-wrap', iconSize: [30, 30], iconAnchor: [15, 30] })
@@ -81,7 +82,7 @@ function renderRoute() {
 
   polyline = L.polyline(
     points.map((p) => [p.lat, p.lng]),
-    { weight: 4, color: '#2563eb', opacity: 0.85 }
+    { weight: 4, color: '#8b7256', opacity: 0.9, dashArray: '2, 6' }
   ).addTo(mapInstance)
   mapInstance.fitBounds(polyline.getBounds(), { padding: [40, 40] })
 }
@@ -152,15 +153,15 @@ onBeforeUnmount(() => {
 .map-pin {
   width: 30px;
   height: 30px;
-  border-radius: 50%;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 15px;
   color: #fff;
   cursor: pointer;
-  border: 2px solid #fff;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.35);
+  border: 2px solid var(--color-shadow, #4a3728);
+  box-shadow: 2px 2px 0 var(--color-shadow, #4a3728);
   transition: transform 0.12s ease;
   animation: floaty 3.2s ease-in-out infinite;
 }
@@ -171,15 +172,15 @@ onBeforeUnmount(() => {
 }
 
 .map-pin--tour {
-  background: var(--color-primary, #2563eb);
+  background: var(--color-primary, #6fae68);
 }
 
 .map-pin--food {
-  background: #f97316;
+  background: var(--color-warning, #e8b84b);
 }
 
 .map-pin--selected {
-  outline: 3px solid #facc15;
+  outline: 3px solid var(--color-danger, #e0654b);
   animation-play-state: paused;
   transform: scale(1.15);
 }
@@ -190,13 +191,14 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 1px;
   padding: 6px 10px;
-  border-radius: 12px;
-  background: var(--color-primary-dark, #1d4ed8);
+  border-radius: 4px;
+  background: var(--color-primary-dark, #4f8a4f);
   color: #fff;
   font-size: 11px;
   cursor: pointer;
   white-space: nowrap;
-  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.3);
+  border: 2px solid var(--color-shadow, #4a3728);
+  box-shadow: 2px 2px 0 var(--color-shadow, #4a3728);
   animation: floaty 3.6s ease-in-out infinite;
 }
 

@@ -2,6 +2,7 @@
 import { useI18n } from 'vue-i18n'
 import { hasKakaoKey, shareToKakao } from '../../utils/kakao'
 import { useToastStore } from '../../stores/toast'
+import PixelIcon from './PixelIcon.vue'
 
 const props = defineProps({
   title: { type: String, required: true },
@@ -38,10 +39,10 @@ const onCopyLink = async () => {
 <template>
   <div class="share-buttons">
     <button type="button" class="btn btn-ghost btn-sm" @click="onKakaoShare">
-      💬 {{ t('board.detail.shareKakao') }}
+      <PixelIcon name="chat" :size="14" /> {{ t('board.detail.shareKakao') }}
     </button>
     <button type="button" class="btn btn-ghost btn-sm" @click="onCopyLink">
-      🔗 {{ t('common.copyLink') }}
+      <PixelIcon name="link" :size="14" /> {{ t('common.copyLink') }}
     </button>
   </div>
 </template>

@@ -1,6 +1,11 @@
 {
   "common": {
     "appName": "LocalHub",
+    "regionLabel": "Daejeon·Chungcheong",
+    "presenceTitle": "Current concurrent visitors",
+    "presenceCount": "{count} online",
+    "notifications": "Notifications",
+    "notificationsEmpty": "No new notifications",
     "loading": "Loading...",
     "save": "Save",
     "cancel": "Cancel",
@@ -47,8 +52,7 @@
     "kakaoMissingTitle": "A Kakao API key is required to share to KakaoTalk",
     "regionPosts": "{count} posts",
     "newPostToast": "New post published: {title}",
-    "viewOnBoard": "View on board",
-    "recentPosts": "Recent posts"
+    "viewOnBoard": "View on board"
   },
   "board": {
     "listTitle": "Board",

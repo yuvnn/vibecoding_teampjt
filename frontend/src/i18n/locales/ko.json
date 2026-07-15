@@ -1,6 +1,11 @@
 {
   "common": {
     "appName": "LocalHub",
+    "regionLabel": "대전·충청",
+    "presenceTitle": "현재 동시 접속자 수",
+    "presenceCount": "{count}명 접속중",
+    "notifications": "알림",
+    "notificationsEmpty": "새 알림이 없어요",
     "loading": "불러오는 중...",
     "save": "저장",
     "cancel": "취소",
@@ -47,8 +52,7 @@
     "kakaoMissingTitle": "카카오톡 공유를 사용하려면 Kakao API 키가 필요해요",
     "regionPosts": "게시글 {count}",
     "newPostToast": "새 게시글이 등록되었어요: {title}",
-    "viewOnBoard": "게시판에서 보기",
-    "recentPosts": "최근 게시글"
+    "viewOnBoard": "게시판에서 보기"
   },
   "board": {
     "listTitle": "게시판",

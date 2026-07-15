@@ -9,6 +9,8 @@ import koLocale from '@fullcalendar/core/locales/ko'
 import { fetchTourItems } from '../api/tour'
 import { useCalendarEventsStore } from '../stores/calendarEvents'
 import EventFormModal from '../components/calendar/EventFormModal.vue'
+import PixelIcon from '../components/common/PixelIcon.vue'
+import { renderPixelIconSVG } from '../utils/pixelIcons'
 
 const FESTIVAL_CONTENT_TYPE_ID = 15
 
@@ -30,16 +32,35 @@ const addOneDay = (dateStr) => {
 }
 
 const fcEvents = computed(() =>
-  calendarStore.events.map((event) => ({
-    id: event.id,
-    title: event.title,
-    start: event.start,
-    end: addOneDay(event.end || event.start),
-    allDay: true,
-    backgroundColor: 'var(--color-primary)',
-    borderColor: 'var(--color-primary-dark)'
-  }))
+  calendarStore.events.map((event) => {
+    const isFestival = event.tags?.includes('축제') ?? false
+    return {
+      id: event.id,
+      title: event.title,
+      start: event.start,
+      end: addOneDay(event.end || event.start),
+      allDay: true,
+      backgroundColor: isFestival ? 'var(--color-warning)' : 'var(--color-primary)',
+      borderColor: isFestival ? 'var(--color-warning)' : 'var(--color-primary-dark)',
+      extendedProps: { isFestival }
+    }
+  })
 )
+
+const renderEventContent = (arg) => {
+  const wrap = document.createElement('span')
+  wrap.className = 'fc-event-pixel-inner'
+  if (arg.event.extendedProps?.isFestival) {
+    const icon = document.createElement('span')
+    icon.className = 'fc-event-pixel-icon'
+    icon.innerHTML = renderPixelIconSVG('star', { size: 11, color: '#fff' })
+    wrap.appendChild(icon)
+  }
+  const title = document.createElement('span')
+  title.textContent = arg.event.title
+  wrap.appendChild(title)
+  return { domNodes: [wrap] }
+}
 
 const calendarOptions = computed(() => ({
   plugins: [dayGridPlugin, listPlugin, interactionPlugin],
@@ -48,6 +69,7 @@ const calendarOptions = computed(() => ({
   headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,listMonth' },
   height: 'auto',
   events: fcEvents.value,
+  eventContent: renderEventContent,
   dateClick: (info) => {
     editingEvent.value = null
     festivalPrefill.value = null
@@ -127,7 +149,7 @@ onMounted(async () => {
 
     <div class="panel calendar-panel">
       <div class="festival-strip">
-        <span class="festival-strip-label">🎉 {{ t('calendar.referenceTitle') }}</span>
+        <span class="festival-strip-label"><PixelIcon name="star" :size="14" color="var(--color-warning)" /> {{ t('calendar.referenceTitle') }}</span>
         <div class="festival-strip-scroll">
           <p v-if="festivalLoading" class="loading-state">{{ t('common.loading') }}</p>
           <button
@@ -139,7 +161,7 @@ onMounted(async () => {
             @click="openFestivalQuickAdd(item)"
           >
             <img v-if="item.first_image" :src="item.first_image" alt="" />
-            <span v-else class="festival-chip-placeholder">🎉</span>
+            <span v-else class="festival-chip-placeholder"><PixelIcon name="star" :size="18" color="var(--color-warning)" /></span>
             <span class="festival-chip-title">{{ item.title }}</span>
           </button>
           <span v-if="!festivalLoading && !festivalItems.length" class="empty-state">
@@ -195,6 +217,17 @@ onMounted(async () => {
   background: var(--color-primary) !important;
   border-color: var(--color-primary) !important;
   color: #fff !important;
+}
+
+.calendar-panel :deep(.fc-event-pixel-inner) {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.calendar-panel :deep(.fc-event-pixel-icon) {
+  display: inline-flex;
+  flex-shrink: 0;
 }
 
 .panel-title {
