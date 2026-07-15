@@ -1,3 +1,10 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.pyc
+
 # OS
 .DS_Store
 Thumbs.db
@@ -16,4 +23,4 @@ npm-debug.log*
 backend.log
 backend.err.log
 frontend.log
-frontend.err.log
+frontend.err.lo
