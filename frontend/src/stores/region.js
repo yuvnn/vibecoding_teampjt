@@ -15,7 +15,12 @@ export const REGIONS = [
 const DEFAULT_REGION = REGIONS[0].code
 
 function loadInitial() {
-  const saved = localStorage.getItem(STORAGE_KEY)
+  let saved = null
+  try {
+    saved = localStorage.getItem(STORAGE_KEY)
+  } catch {
+    saved = null
+  }
   return REGIONS.some((r) => r.code === saved) ? saved : DEFAULT_REGION
 }
 
@@ -30,7 +35,11 @@ export const useRegionStore = defineStore('region', {
     setRegion(code) {
       if (!REGIONS.some((r) => r.code === code)) return
       this.selectedRegion = code
-      localStorage.setItem(STORAGE_KEY, code)
+      try {
+        localStorage.setItem(STORAGE_KEY, code)
+      } catch {
+        // Ignore storage failures; selection still works for the session.
+      }
     }
   }
 })

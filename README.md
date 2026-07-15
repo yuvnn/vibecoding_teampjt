@@ -186,6 +186,10 @@ GitLab 저장소에 절대 올리지 않는다.
 - 저장소를 Netlify에 연결하면 루트의 `netlify.toml`(`base = "frontend"`, `publish = "dist"`)에
   따라 자동으로 `frontend/` 만 빌드된다.
 - Netlify 사이트 설정 > Environment variables에 `VITE_API_BASE_URL`(Render 백엔드 URL)을 등록.
+- `VITE_API_BASE_URL`은 Vite가 **빌드 시점에 주입**하므로, Render 서비스 URL이 바뀌면 Netlify도
+  해당 값으로 **다시 빌드/재배포**해야 한다.
+- Render 대시보드에서 백엔드 서비스의 URL을 복사해 넣는다. 보통 `https://<service-name>.onrender.com`
+  형태이며, 백엔드가 커스텀 도메인을 쓰면 그 주소를 넣으면 된다.
 - SPA 라우팅을 위해 `netlify.toml`에 `/* → /index.html` 리다이렉트를 이미 포함.
 
 ### 백엔드 → Render

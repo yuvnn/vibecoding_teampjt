@@ -11,6 +11,10 @@ class Settings(BaseSettings):
     frontend_origin: str = "http://localhost:5173"
     region: str = "대전/충청권"
 
+    @property
+    def frontend_origins(self) -> list[str]:
+        return [origin.strip() for origin in self.frontend_origin.split(",") if origin.strip()]
+
 
 @lru_cache
 def get_settings() -> Settings:
