@@ -24,6 +24,21 @@ const initialDate = ref('')
 
 const festivalItems = ref([])
 const festivalLoading = ref(true)
+const selectedFestival = ref(null)
+const selectedFestivalStartDate = ref('')
+const selectedFestivalEndDate = ref('')
+
+const normalizeFestivalDate = (value) => {
+  if (!value) return ''
+  const text = String(value).trim()
+  if (!text) return ''
+  if (/^\d{8}$/.test(text)) {
+    return `${text.slice(0, 4)}-${text.slice(4, 6)}-${text.slice(6, 8)}`
+  }
+  const date = new Date(text)
+  if (Number.isNaN(date.getTime())) return ''
+  return date.toISOString().slice(0, 10)
+}
 
 const addOneDay = (dateStr) => {
   const date = new Date(dateStr)
@@ -111,16 +126,40 @@ const handleDelete = (id) => {
   }
 }
 
-const openFestivalQuickAdd = (item) => {
-  editingEvent.value = null
-  festivalPrefill.value = {
+const openFestivalModal = (item) => {
+  selectedFestival.value = item
+  selectedFestivalStartDate.value = normalizeFestivalDate(item.eventstartdate || item.start_date)
+  selectedFestivalEndDate.value = normalizeFestivalDate(item.eventenddate || item.end_date || item.eventstartdate || item.start_date)
+}
+
+const closeFestivalModal = () => {
+  selectedFestival.value = null
+  selectedFestivalStartDate.value = ''
+  selectedFestivalEndDate.value = ''
+}
+
+const addFestivalToCalendar = () => {
+  if (!selectedFestival.value) return
+
+  const item = selectedFestival.value
+  const start = normalizeFestivalDate(selectedFestivalStartDate.value) || normalizeFestivalDate(item.eventstartdate || item.start_date)
+  const end = normalizeFestivalDate(selectedFestivalEndDate.value) || start || normalizeFestivalDate(item.eventenddate || item.end_date || item.eventstartdate || item.start_date)
+  const payload = {
+    id: `festival-${item.contentid || item.id}`,
     title: item.title,
+    start: start || new Date().toISOString().slice(0, 10),
+    end: end || start || new Date().toISOString().slice(0, 10),
     description: [item.addr1, item.tel].filter(Boolean).join(' · '),
     imageDataUrl: item.first_image || '',
     tags: ['축제']
   }
-  initialDate.value = new Date().toISOString().slice(0, 10)
-  modalOpen.value = true
+
+  const existing = calendarStore.events.find((event) => event.id === payload.id)
+  if (!existing) {
+    calendarStore.create(payload)
+  }
+
+  closeFestivalModal()
 }
 
 onMounted(async () => {
@@ -147,30 +186,66 @@ onMounted(async () => {
       </button>
     </div>
 
-    <div class="panel calendar-panel">
-      <div class="festival-strip">
-        <span class="festival-strip-label"><PixelIcon name="star" :size="14" color="var(--color-warning)" /> {{ t('calendar.referenceTitle') }}</span>
-        <div class="festival-strip-scroll">
-          <p v-if="festivalLoading" class="loading-state">{{ t('common.loading') }}</p>
+    <div class="calendar-layout">
+      <div class="panel calendar-panel">
+        <FullCalendar :options="calendarOptions" />
+      </div>
+
+      <aside class="panel festival-panel">
+        <div class="festival-panel__header">
+          <h3>{{ t('calendar.referenceTitle') }}</h3>
+          <span class="festival-panel__count">{{ festivalItems.length }}</span>
+        </div>
+
+        <p v-if="festivalLoading" class="loading-state">{{ t('common.loading') }}</p>
+        <div v-else-if="festivalItems.length" class="festival-list">
           <button
             v-for="item in festivalItems"
             :key="item.id"
             type="button"
-            class="festival-chip"
+            class="festival-card"
             :title="t('calendar.quickAddHint')"
-            @click="openFestivalQuickAdd(item)"
+            @click="openFestivalModal(item)"
           >
             <img v-if="item.first_image" :src="item.first_image" alt="" />
-            <span v-else class="festival-chip-placeholder"><PixelIcon name="star" :size="18" color="var(--color-warning)" /></span>
-            <span class="festival-chip-title">{{ item.title }}</span>
+            <span v-else class="festival-card-placeholder"><PixelIcon name="star" :size="18" color="var(--color-warning)" /></span>
+            <div class="festival-card__body">
+              <strong>{{ item.title }}</strong>
+              <span>{{ item.addr1 || t('calendar.referenceEmpty') }}</span>
+            </div>
           </button>
-          <span v-if="!festivalLoading && !festivalItems.length" class="empty-state">
-            {{ t('calendar.referenceEmpty') }}
-          </span>
+        </div>
+        <p v-else class="empty-state">{{ t('calendar.referenceEmpty') }}</p>
+      </aside>
+    </div>
+
+    <div v-if="selectedFestival" class="festival-modal-backdrop" @click.self="closeFestivalModal">
+      <div class="festival-modal">
+        <div class="festival-modal__header">
+          <h3>{{ selectedFestival.title }}</h3>
+          <button type="button" class="btn btn-ghost btn-sm" @click="closeFestivalModal">닫기</button>
+        </div>
+        <div class="festival-modal__body">
+          <img v-if="selectedFestival.first_image" :src="selectedFestival.first_image" alt="" />
+          <div class="festival-modal__info">
+            <p v-if="selectedFestival.addr1"><strong>장소</strong> {{ selectedFestival.addr1 }}</p>
+            <p v-if="selectedFestival.tel"><strong>연락처</strong> {{ selectedFestival.tel }}</p>
+          </div>
+          <div class="festival-modal__date-fields">
+            <label>
+              <span>일정 시작일</span>
+              <input v-model="selectedFestivalStartDate" type="date" />
+            </label>
+            <label>
+              <span>일정 종료일</span>
+              <input v-model="selectedFestivalEndDate" type="date" />
+            </label>
+          </div>
+        </div>
+        <div class="festival-modal__actions">
+          <button type="button" class="btn btn-primary" @click="addFestivalToCalendar">일정 추가</button>
         </div>
       </div>
-
-      <FullCalendar :options="calendarOptions" />
     </div>
 
     <EventFormModal
@@ -230,74 +305,194 @@ onMounted(async () => {
   flex-shrink: 0;
 }
 
-.panel-title {
-  margin: 0 0 12px;
-  font-size: 1.05rem;
+.calendar-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.8fr);
+  gap: 16px;
+  align-items: start;
 }
 
-.festival-strip {
+.calendar-panel {
+  min-width: 0;
+}
+
+.festival-panel {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  padding-bottom: 14px;
-  margin-bottom: 14px;
-  border-bottom: 1px dashed var(--color-border);
-}
-
-.festival-strip-label {
-  flex-shrink: 0;
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--color-text-muted);
-}
-
-.festival-strip-scroll {
-  display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 10px;
-  overflow-x: auto;
-  padding: 4px 2px;
-  scrollbar-width: thin;
+  min-height: 420px;
 }
 
-.festival-chip {
-  flex-shrink: 0;
+.festival-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.festival-panel__header h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.festival-panel__count {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 14px 6px 6px;
-  border: none;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
   border-radius: 999px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.festival-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.festival-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
   background: var(--color-surface-alt);
   color: var(--color-text);
   cursor: pointer;
+  text-align: left;
   font-family: inherit;
-  font-size: 0.82rem;
-  white-space: nowrap;
-  transition: background-color 0.12s ease, transform 0.12s ease;
 }
 
-.festival-chip:hover {
+.festival-card:hover {
   background: var(--color-primary-soft);
-  transform: translateY(-1px);
 }
 
-.festival-chip img,
-.festival-chip-placeholder {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
+.festival-card img,
+.festival-card-placeholder {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
   object-fit: cover;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   background: var(--color-surface);
-  font-size: 0.9rem;
 }
 
-.festival-chip-title {
-  max-width: 140px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.festival-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.festival-card__body strong {
+  font-size: 0.84rem;
+  line-height: 1.35;
+}
+
+.festival-card__body span {
+  font-size: 0.74rem;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+.festival-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.festival-modal {
+  width: min(520px, 100%);
+  max-height: min(80vh, 760px);
+  overflow: auto;
+  padding: 18px;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-lg);
+}
+
+.festival-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.festival-modal__header h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.festival-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.festival-modal__body img {
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+}
+
+.festival-modal__info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.festival-modal__info p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-text);
+}
+
+.festival-modal__date-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.festival-modal__date-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--color-text);
+}
+
+.festival-modal__date-fields input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-alt);
+  color: var(--color-text);
+}
+
+.festival-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
 }
 </style>
