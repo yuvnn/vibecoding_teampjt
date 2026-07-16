@@ -1,7 +1,16 @@
 import { defineStore } from 'pinia'
+import { watch } from 'vue'
+import { useRegionStore } from './region'
 
-const LAT = 36.3504
-const LON = 127.3845
+// Representative city coordinates for each selectable region.
+const REGION_COORDS = {
+  대전_충청권: { lat: 36.3504, lon: 127.3845 },
+  서울: { lat: 37.5665, lon: 126.978 },
+  구미_경북권: { lat: 36.1195, lon: 128.3446 },
+  광주_전라권: { lat: 35.1595, lon: 126.8526 },
+  부산: { lat: 35.1796, lon: 129.0756 }
+}
+const DEFAULT_COORDS = REGION_COORDS.대전_충청권
 const REFRESH_INTERVAL_MS = 30 * 60 * 1000
 
 function classifyIcon(code) {
@@ -28,9 +37,11 @@ export const useWeatherStore = defineStore('weather', {
   },
   actions: {
     async fetchNow() {
+      const regionStore = useRegionStore()
+      const { lat, lon } = REGION_COORDS[regionStore.selectedRegion] ?? DEFAULT_COORDS
       try {
         const res = await fetch(
-          `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,weather_code&timezone=Asia%2FSeoul`
+          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&timezone=Asia%2FSeoul`
         )
         if (!res.ok) throw new Error('weather fetch failed')
         const data = await res.json()
@@ -43,6 +54,11 @@ export const useWeatherStore = defineStore('weather', {
     startPolling() {
       if (this.started) return
       this.started = true
+      const regionStore = useRegionStore()
+      watch(
+        () => regionStore.selectedRegion,
+        () => this.fetchNow()
+      )
       this.fetchNow()
       setInterval(() => this.fetchNow(), REFRESH_INTERVAL_MS)
     }
