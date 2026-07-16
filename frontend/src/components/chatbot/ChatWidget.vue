@@ -108,13 +108,17 @@ const focusPlaceOnMap = (place) => {
   right: 20px;
   bottom: 20px;
   z-index: 90;
-  width: 100%;
-  max-width: 380px;
-  max-height: min(65vh, 520px);
+  width: clamp(380px, 32vw, 480px);
+  min-width: 380px;
+  max-width: min(480px, calc(100vw - 40px));
+  min-height: 460px;
+  max-height: min(75vh, 640px);
   display: flex;
   flex-direction: column;
   background: color-mix(in srgb, var(--color-surface) 94%, transparent);
   backdrop-filter: blur(10px);
+  resize: both;
+  overflow: hidden;
 }
 
 .chat-dock-header {
@@ -244,12 +248,17 @@ const focusPlaceOnMap = (place) => {
 @media (max-width: 860px) {
   .chat-dock {
     bottom: 76px;
+    width: calc(100vw - 24px);
+    min-width: 0;
+    max-width: none;
+    min-height: 0;
+    max-height: min(65vh, 520px);
+    resize: none;
   }
 }
 
 @media (max-width: 480px) {
   .chat-dock {
-    width: calc(100vw - 24px);
     right: 12px;
     bottom: 76px;
   }

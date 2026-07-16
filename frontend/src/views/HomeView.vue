@@ -150,7 +150,11 @@ const onPinClick = () => {
 }
 
 const onAddRoute = (pin) => {
-  routeStore.toggle(pin)
+  routeStore.toggle({
+    ...pin,
+    lat: pin.lat ?? (pin.map_y != null ? Number(pin.map_y) : undefined),
+    lng: pin.lng ?? (pin.map_x != null ? Number(pin.map_x) : undefined)
+  })
 }
 
 const onRegionClick = (region) => {
@@ -422,6 +426,9 @@ watch(
   background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
   color: #fff;
   box-shadow: var(--shadow-md);
+  /* Purely decorative, nothing inside is interactive — let every click
+     pass straight through to the map. */
+  pointer-events: none;
 }
 
 .home-banner h1 {
@@ -459,7 +466,7 @@ watch(
      on whichever child currently had the most intrinsic content, so the
      toolbar and recommend panel could end up different widths depending on
      collapse state and viewport. This makes both always match exactly. */
-  width: clamp(300px, 45vw, 640px);
+  width: clamp(312px, 46vw, 660px);
   max-width: calc(100% - 32px);
   max-height: calc(100% - 170px);
   /* This flex container's own box is as wide as its widest child (the
@@ -511,6 +518,18 @@ watch(
   background: color-mix(in srgb, var(--color-surface) 78%, transparent);
   backdrop-filter: blur(10px);
   box-shadow: var(--shadow-md);
+  /* Leaflet's own transform-based stacking context on its map pane bundles
+     tiles/markers/popups together as one z-index unit — there is no pure
+     z-index trick that lets a popup escape above this panel while a marker
+     stays under it. So instead of claiming this panel's whole rectangle for
+     clicks (which silently ate clicks on any popup/pin rendering underneath
+     its padding or gaps), only the actual controls inside it are clickable;
+     empty background passes clicks through to the map. */
+  pointer-events: none;
+}
+
+.map-toolbar > * {
+  pointer-events: auto;
 }
 
 /* Collapsed, there's nothing but the title and the arrow — no reason to
@@ -579,6 +598,11 @@ watch(
   box-shadow: var(--shadow-lg);
   padding: 14px;
   z-index: 7;
+  pointer-events: none;
+}
+
+.region-popover > * {
+  pointer-events: auto;
 }
 
 .region-popover-header {
@@ -615,7 +639,7 @@ watch(
 .recommend-panel {
   /* Deliberately narrower than the toolbar (and fixed regardless of
      collapsed/expanded state) rather than stretching to match it. */
-  width: 220px;
+  width: 250px;
   flex: 1;
   min-height: 0;
   padding: 14px;
@@ -627,6 +651,13 @@ watch(
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   overflow: hidden;
+  /* See .map-toolbar's comment — only actual controls should intercept
+     clicks, not this panel's whole background/padding. */
+  pointer-events: none;
+}
+
+.recommend-panel > * {
+  pointer-events: auto;
 }
 
 .recommend-panel-header {
@@ -742,6 +773,11 @@ watch(
   backdrop-filter: blur(10px);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
+  pointer-events: none;
+}
+
+.route-panel > * {
+  pointer-events: auto;
 }
 
 .route-panel h3 {

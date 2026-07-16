@@ -17,11 +17,11 @@ export const useRouteStore = defineStore('route', {
     toggle(place) {
       const index = this.items.findIndex((item) => item.id === place.id)
       if (index !== -1) {
-        this.items.splice(index, 1)
+        this.items = this.items.filter((item) => item.id !== place.id)
         return
       }
       if (this.items.length >= MAX_ROUTE_SELECTION) return
-      this.items.push(place)
+      this.items = [...this.items, place]
     },
     remove(id) {
       this.items = this.items.filter((item) => item.id !== id)

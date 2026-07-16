@@ -109,6 +109,19 @@ function clearPolyline() {
   polyline = null
 }
 
+// Toggling a pin's route-selection used to be handled by fully tearing down
+// and rebuilding every marker on the map (clearPinOverlays + renderTourPins)
+// — which also destroys/recreates the marker whose popup you'd just clicked
+// "add to route" in, snapping it shut right as you clicked. Just flip the
+// CSS class on the existing marker elements instead.
+function updateMarkerSelection() {
+  markerById.forEach((marker, id) => {
+    const el = marker.getElement()?.querySelector('.map-pin')
+    if (!el) return
+    el.classList.toggle('map-pin--selected', props.selectedIds.includes(id))
+  })
+}
+
 function renderTourPins() {
   if (!mapInstance) return
   clearPinOverlays()
@@ -187,7 +200,7 @@ watch(() => props.regionPins, renderRegionPins)
 watch(
   () => props.selectedIds,
   () => {
-    renderTourPins()
+    updateMarkerSelection()
     renderRoute()
   },
   { deep: true }
