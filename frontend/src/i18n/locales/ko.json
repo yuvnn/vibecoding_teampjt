@@ -28,6 +28,7 @@
   "nav": {
     "board": "게시판",
     "calendar": "캘린더",
+    "roulette": "룰렛",
     "write": "글쓰기"
   },
   "theme": {
@@ -157,5 +158,20 @@
     "quickAddHint": "탭하면 캘린더에 일정으로 추가돼요",
     "referenceEmpty": "참고할 축제 정보를 불러오지 못했어요.",
     "deleteConfirm": "이 일정을 삭제할까요?"
+  },
+  "roulette": {
+    "title": "관광지 룰렛",
+    "subtitle": "{region}의 관광지 중에서 룰렛을 돌려 오늘 갈 곳을 정해보세요",
+    "spin": "룰렛 돌리기",
+    "spinning": "돌아가는 중...",
+    "loading": "관광지를 불러오는 중...",
+    "empty": "이 지역은 아직 룰렛에 담을 관광지 정보가 없어요.",
+    "reroll": "20곳 다시 뽑기",
+    "candidateTitle": "오늘의 후보 {count}곳",
+    "resultTitle": "🎉 당첨! 🎉",
+    "resultHint": "오늘은 여기 어때요?",
+    "viewOnMap": "지도에서 보기",
+    "spinAgain": "다시 돌리기",
+    "close": "닫기"
   }
 }

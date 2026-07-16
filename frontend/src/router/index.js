@@ -4,6 +4,7 @@ import BoardListView from '../views/BoardListView.vue'
 import BoardDetailView from '../views/BoardDetailView.vue'
 import BoardWriteView from '../views/BoardWriteView.vue'
 import CalendarView from '../views/CalendarView.vue'
+import RouletteView from '../views/RouletteView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -13,7 +14,8 @@ const router = createRouter({
     { path: '/board/new', name: 'board-write', component: BoardWriteView },
     { path: '/board/:id', name: 'board-detail', component: BoardDetailView, props: true },
     { path: '/board/:id/edit', name: 'board-edit', component: BoardWriteView, props: true },
-    { path: '/calendar', name: 'calendar', component: CalendarView }
+    { path: '/calendar', name: 'calendar', component: CalendarView },
+    { path: '/roulette', name: 'roulette', component: RouletteView }
   ],
   scrollBehavior() {
     return { top: 0 }

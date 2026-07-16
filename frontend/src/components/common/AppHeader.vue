@@ -101,6 +101,7 @@ onBeforeUnmount(() => {
     <nav class="app-nav">
       <router-link to="/board" class="nav-link">{{ t('nav.board') }}</router-link>
       <router-link to="/calendar" class="nav-link">{{ t('nav.calendar') }}</router-link>
+      <router-link to="/roulette" class="nav-link">{{ t('nav.roulette') }}</router-link>
     </nav>
 
     <div class="header-right">

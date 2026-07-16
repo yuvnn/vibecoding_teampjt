@@ -28,6 +28,7 @@
   "nav": {
     "board": "Board",
     "calendar": "Calendar",
+    "roulette": "Roulette",
     "write": "Write"
   },
   "theme": {
@@ -157,5 +158,20 @@
     "quickAddHint": "Tap to add this to your calendar",
     "referenceEmpty": "Couldn't load festival reference data.",
     "deleteConfirm": "Delete this event?"
+  },
+  "roulette": {
+    "title": "Attraction Roulette",
+    "subtitle": "Spin the wheel to pick today's destination in {region}",
+    "spin": "Spin the wheel",
+    "spinning": "Spinning...",
+    "loading": "Loading attractions...",
+    "empty": "No attractions available for this region yet.",
+    "reroll": "Draw 20 new spots",
+    "candidateTitle": "{count} spots on the wheel",
+    "resultTitle": "🎉 Winner! 🎉",
+    "resultHint": "How about here today?",
+    "viewOnMap": "View on map",
+    "spinAgain": "Spin again",
+    "close": "Close"
   }
 }
